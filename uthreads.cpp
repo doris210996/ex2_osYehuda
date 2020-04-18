@@ -319,6 +319,42 @@ int uthread_get_quantums(int tid){
     return -1;
 }
 
+int uthread_block(int tid)
+{
+    // Raise an error if the required id is zero or negative
+    // or the required id doe'nt exist
+    if (tid <= 0 || !_threads.count(tid)){
+        return -1;
+    }
+    if (_threads[tid]->getState() == RUNNING){
+        Thread* next = popReady();
+        _running = next;
+        _running->setState(RUNNING);
+        _running->incQuantums();
+        _qCounter++;
+        startTimer();
+    }else if (_threads.at(tid)->getState() == READY){
+        popReady();
+    }
+    _threads[tid]->setState(BLOCK);
+    return 0;
+}
+
+int uthread_resume(int tid)
+{
+    if (tid <= 0 || !_threads.count(tid)){
+        return -1;
+    }
+    if (_threads[tid]->getState() == BLOCK)
+    {
+        pushReady(_threads.at(tid));
+        _threads[tid]->setState(READY);
+    }
+    return 0;
+}
+
+
+
 void f(){
     while(1)
     {
